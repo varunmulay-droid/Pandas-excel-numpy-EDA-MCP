@@ -1,0 +1,403 @@
+{
+  "id": "fcf68783-6986-4ba8-9868-683e16ea0785",
+  "name": "Finance & HR Smart Data Analyst (Pandas-Excel-EDA MCP)",
+  "description": "Agentic data-analysis workflow for a Finance/HR/Admin leader. Uses an OpenRouter LLM as the reasoning agent, wired to the Pandas Excel Analytics MCP server (Pandas, NumPy, Excel automation, EDA, data-quality) for deterministic analysis of budgets, payroll, GST/tax, MIS, and financial statements.",
+  "data": {
+    "nodes": [
+      {
+        "id": "ChatInput-cc805",
+        "type": "genericNode",
+        "position": {
+          "x": 80,
+          "y": 300
+        },
+        "data": {
+          "id": "ChatInput-cc805",
+          "type": "ChatInput",
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "required": false,
+                "value": "",
+                "display_name": "Text",
+                "input_types": [
+                  "Message"
+                ]
+              },
+              "sender": {
+                "type": "str",
+                "value": "User",
+                "display_name": "Sender Type"
+              },
+              "sender_name": {
+                "type": "str",
+                "value": "Finance & HR Lead",
+                "display_name": "Sender Name"
+              },
+              "session_id": {
+                "type": "str",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true
+              },
+              "should_store_message": {
+                "type": "bool",
+                "value": true,
+                "advanced": true
+              }
+            },
+            "description": "Chat entry point \u2014 the question or instruction from the Finance/HR lead.",
+            "display_name": "Chat Input",
+            "base_classes": [
+              "Message"
+            ],
+            "documentation": ""
+          },
+          "showNode": true
+        }
+      },
+      {
+        "id": "Prompt-ae924",
+        "type": "genericNode",
+        "position": {
+          "x": 80,
+          "y": 620
+        },
+        "data": {
+          "id": "Prompt-ae924",
+          "type": "Prompt",
+          "node": {
+            "template": {
+              "template": {
+                "type": "prompt",
+                "value": "You are a senior Financial & HR Data Analyst assistant working for a Finance, HR, Admin & IT Operations leader with 21+ years in the services industry (MBA-Finance; expertise in Auditing, GST, Direct & Indirect Tax, FEMA, SEZ Compliance, Transfer Pricing, IND-AS Financial Reporting, Budgeting, Forecasting, Costing, Profit Center Management, Cash Flow, Payroll, Compensation & Benefits, Performance Management, and MIS Reporting).\n\nYou have access to a deterministic data-analysis toolset (Pandas Excel Analytics MCP) exposing 27 tools across:\n- Dataset management (upload_dataset, list_datasets, dataset_info, preview_data, column_profile, list_sheets)\n- Pandas operations (filter_rows, sort_data, group_by, aggregate, merge_datasets, pivot_table, clean_dataset, value_counts)\n- NumPy statistics (numpy_statistics, correlation_analysis, outlier_analysis)\n- Automated EDA (eda_report, data_quality_report)\n- Excel automation (excel_read_range, excel_write_range, excel_format, excel_chart, excel_list_sheets)\n- Export (export_excel, export_csv, export_json)\n\nTypical requests you should handle well:\n- \"Upload this month's P&L / trial balance / payroll register and check data quality.\"\n- \"Group expenses by cost center and show variance vs budget.\"\n- \"Build a pivot table of GST input credit by vendor and month.\"\n- \"Flag outlier transactions in the ledger using IQR or Z-score.\"\n- \"Run a full EDA report on the HR headcount/attrition file and summarize findings for MIS.\"\n- \"Clean the payroll export: drop duplicates, fill missing PAN/UAN, then export to Excel with formatting and a chart.\"\n\nRules:\n1. Always call upload_dataset first if the user references a file that hasn't been uploaded to this session yet, then use the returned dataset_id for every subsequent tool call \u2014 never invent a dataset_id.\n2. Prefer data_quality_report / eda_report before deep analysis on any new dataset, and mention data-quality caveats (missing values, duplicates, outliers) in your final answer.\n3. Use group_by / pivot_table / aggregate for MIS-style summaries; use correlation_analysis / outlier_analysis for financial-control checks (e.g. unusual transaction amounts).\n4. When the user wants a deliverable file, use the export_* or excel_* tools and clearly state what was produced.\n5. Explain results in plain business language suitable for a Finance/HR leader \u2014 lead with the business conclusion, then the supporting numbers.\n6. Never fabricate figures. If a tool call fails, report the error plainly and suggest the next step (e.g. re-upload, correct column name).\n",
+                "display_name": "Template"
+              }
+            },
+            "description": "Domain system prompt: Finance/HR/GST/IND-AS/MIS context and tool-use rules for the agent.",
+            "display_name": "Finance & HR System Prompt",
+            "base_classes": [
+              "Message"
+            ],
+            "documentation": ""
+          },
+          "showNode": true
+        }
+      },
+      {
+        "id": "MCPTools-d95d4",
+        "type": "genericNode",
+        "position": {
+          "x": 480,
+          "y": 620
+        },
+        "data": {
+          "id": "MCPTools-d95d4",
+          "type": "MCPTools",
+          "node": {
+            "template": {
+              "mcp_server": {
+                "type": "dict",
+                "display_name": "MCP Server",
+                "value": {
+                  "name": "pandas-excel-analytics-mcp",
+                  "mode": "sse",
+                  "url": "https://YOUR-SERVICE.onrender.com/mcp",
+                  "headers": {
+                    "Authorization": "Bearer ${MCP_API_TOKEN}"
+                  }
+                },
+                "info": "Replace https://YOUR-SERVICE.onrender.com/mcp with your deployed Render URL. Set MCP_API_TOKEN as a Langflow Global Variable matching the Render env var of the same name."
+              },
+              "tool": {
+                "type": "str",
+                "value": "",
+                "display_name": "Tool",
+                "info": "Leave blank to expose all 27 tools (upload_dataset, group_by, pivot_table, eda_report, data_quality_report, excel_chart, export_excel, etc.) to the Agent."
+              },
+              "use_cache": {
+                "type": "bool",
+                "value": true,
+                "display_name": "Use Cache",
+                "advanced": true
+              },
+              "verify_ssl": {
+                "type": "bool",
+                "value": true,
+                "display_name": "Verify SSL",
+                "advanced": true
+              }
+            },
+            "description": "Connects to the deterministic Pandas / NumPy / Excel / EDA MCP server deployed on Render and exposes its 27 tools as a Toolset for the Agent.",
+            "display_name": "MCP Tools \u2014 Pandas Excel Analytics",
+            "base_classes": [
+              "Tool",
+              "BaseTool"
+            ],
+            "documentation": "https://docs.langflow.org/mcp-client"
+          },
+          "showNode": true
+        }
+      },
+      {
+        "id": "Agent-ed5f2",
+        "type": "genericNode",
+        "position": {
+          "x": 880,
+          "y": 300
+        },
+        "data": {
+          "id": "Agent-ed5f2",
+          "type": "Agent",
+          "node": {
+            "template": {
+              "agent_llm": {
+                "type": "str",
+                "value": "Custom",
+                "display_name": "Model Provider",
+                "info": "Set to a custom/OpenAI-compatible provider so it can point at OpenRouter's endpoint."
+              },
+              "base_url": {
+                "type": "str",
+                "value": "https://openrouter.ai/api/v1",
+                "display_name": "Base URL"
+              },
+              "api_key": {
+                "type": "str",
+                "value": "${OPENROUTER_API_KEY}",
+                "display_name": "OpenRouter API Key",
+                "password": true,
+                "info": "Add OPENROUTER_API_KEY as a Langflow Global Variable (Settings -> Global Variables) rather than pasting the key directly."
+              },
+              "model_name": {
+                "type": "str",
+                "value": "meta-llama/llama-3.1-8b-instruct:free",
+                "display_name": "Model Name",
+                "info": "Swap for any free OpenRouter model you have access to, e.g. google/gemini-2.0-flash-exp:free, qwen/qwen-2.5-72b-instruct:free."
+              },
+              "temperature": {
+                "type": "float",
+                "value": 0.2,
+                "display_name": "Temperature"
+              },
+              "system_prompt": {
+                "type": "str",
+                "value": "",
+                "display_name": "Agent Instructions",
+                "input_types": [
+                  "Message"
+                ],
+                "info": "Wired from the Finance & HR System Prompt component."
+              },
+              "input_value": {
+                "type": "str",
+                "value": "",
+                "display_name": "Input",
+                "input_types": [
+                  "Message"
+                ]
+              },
+              "tools": {
+                "type": "list",
+                "value": [],
+                "display_name": "Tools",
+                "input_types": [
+                  "Tool"
+                ],
+                "info": "Wired from the MCP Tools (Pandas Excel Analytics) toolset."
+              },
+              "max_tokens": {
+                "type": "int",
+                "value": 4096,
+                "display_name": "Max Tokens",
+                "advanced": true
+              },
+              "handle_parsing_errors": {
+                "type": "bool",
+                "value": true,
+                "advanced": true
+              },
+              "verbose": {
+                "type": "bool",
+                "value": true,
+                "advanced": true
+              }
+            },
+            "description": "Orchestrating agent: OpenRouter free-tier LLM reasons over the request and calls the Pandas Excel Analytics MCP tools to perform deterministic data analysis.",
+            "display_name": "Finance & HR Data Analyst Agent",
+            "base_classes": [
+              "Message"
+            ],
+            "documentation": "https://docs.langflow.org/agents"
+          },
+          "showNode": true
+        }
+      },
+      {
+        "id": "ChatOutput-4bdc9",
+        "type": "genericNode",
+        "position": {
+          "x": 1280,
+          "y": 300
+        },
+        "data": {
+          "id": "ChatOutput-4bdc9",
+          "type": "ChatOutput",
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "value": "",
+                "display_name": "Text",
+                "input_types": [
+                  "Message"
+                ]
+              },
+              "sender": {
+                "type": "str",
+                "value": "Machine",
+                "display_name": "Sender Type"
+              },
+              "sender_name": {
+                "type": "str",
+                "value": "Data Analyst Agent",
+                "display_name": "Sender Name"
+              },
+              "should_store_message": {
+                "type": "bool",
+                "value": true,
+                "advanced": true
+              }
+            },
+            "description": "Returns the agent's analysis, MIS summary, or exported-file confirmation to the chat.",
+            "display_name": "Chat Output",
+            "base_classes": [
+              "Message"
+            ],
+            "documentation": ""
+          },
+          "showNode": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "reactflow__edge-ChatInput-cc805message-Agent-ed5f2input_value",
+        "source": "ChatInput-cc805",
+        "target": "Agent-ed5f2",
+        "sourceHandle": "{\"dataType\": \"Message\", \"id\": \"ChatInput-cc805\", \"name\": \"message\", \"output_types\": [\"Message\"]}",
+        "targetHandle": "{\"fieldName\": \"input_value\", \"id\": \"Agent-ed5f2\", \"inputTypes\": [\"Message\"], \"type\": \"str\"}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "Agent-ed5f2",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "Message",
+            "id": "ChatInput-cc805",
+            "name": "message",
+            "output_types": [
+              "Message"
+            ]
+          }
+        }
+      },
+      {
+        "id": "reactflow__edge-Prompt-ae924prompt-Agent-ed5f2system_prompt",
+        "source": "Prompt-ae924",
+        "target": "Agent-ed5f2",
+        "sourceHandle": "{\"dataType\": \"Message\", \"id\": \"Prompt-ae924\", \"name\": \"prompt\", \"output_types\": [\"Message\"]}",
+        "targetHandle": "{\"fieldName\": \"system_prompt\", \"id\": \"Agent-ed5f2\", \"inputTypes\": [\"Message\"], \"type\": \"str\"}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "system_prompt",
+            "id": "Agent-ed5f2",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "Message",
+            "id": "Prompt-ae924",
+            "name": "prompt",
+            "output_types": [
+              "Message"
+            ]
+          }
+        }
+      },
+      {
+        "id": "reactflow__edge-MCPTools-d95d4component_as_tool-Agent-ed5f2tools",
+        "source": "MCPTools-d95d4",
+        "target": "Agent-ed5f2",
+        "sourceHandle": "{\"dataType\": \"Tool\", \"id\": \"MCPTools-d95d4\", \"name\": \"component_as_tool\", \"output_types\": [\"Tool\"]}",
+        "targetHandle": "{\"fieldName\": \"tools\", \"id\": \"Agent-ed5f2\", \"inputTypes\": [\"Tool\"], \"type\": \"str\"}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "tools",
+            "id": "Agent-ed5f2",
+            "inputTypes": [
+              "Tool"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "Tool",
+            "id": "MCPTools-d95d4",
+            "name": "component_as_tool",
+            "output_types": [
+              "Tool"
+            ]
+          }
+        }
+      },
+      {
+        "id": "reactflow__edge-Agent-ed5f2response-ChatOutput-4bdc9input_value",
+        "source": "Agent-ed5f2",
+        "target": "ChatOutput-4bdc9",
+        "sourceHandle": "{\"dataType\": \"Message\", \"id\": \"Agent-ed5f2\", \"name\": \"response\", \"output_types\": [\"Message\"]}",
+        "targetHandle": "{\"fieldName\": \"input_value\", \"id\": \"ChatOutput-4bdc9\", \"inputTypes\": [\"Message\"], \"type\": \"str\"}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "ChatOutput-4bdc9",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "Message",
+            "id": "Agent-ed5f2",
+            "name": "response",
+            "output_types": [
+              "Message"
+            ]
+          }
+        }
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.7
+    }
+  },
+  "is_component": false,
+  "last_tested_version": "1.9.6",
+  "endpoint_name": null,
+  "tags": [
+    "finance",
+    "hr",
+    "eda",
+    "mcp",
+    "agent",
+    "openrouter"
+  ]
+}
